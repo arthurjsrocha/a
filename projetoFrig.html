@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	 <title>Frigoríficos ativos na Amazônia Legal</title>
+	
+	   <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css" integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14=" crossorigin=""/>
+
+    <script type="text/javascript" src="tacNao.js"></script>
+    <script type="text/javascript" src="tacSim.js"></script>
+    <script type="text/javascript" src="amzLegalLinha.js"></script>
+    <script type="text/javascript" src="amzBiomaLinha.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js" integrity="sha256-o9N1jGDZrf5tS+Ft4gbIK7mYMipq9lqpVJ91xHSyKhg=" crossorigin="" ></script>
+    
+    <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    .leaflet-container {
+      height: 400px;
+      width: 600px;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+
+
+  <style>#map { width: 800px; height: 500px; }
+.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
+.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }</style>
+  
+  </head>
+
+<body>
+
+<div id="map" style="width: 2000px; height: 1000px;"></div>
+
+
+<script>
+	var map = L.map('map').setView([-9.538040, -56.607200], 5);
+	const tiles = L.tileLayer('https://api.mapbox.com/styles/v1/arthurjrocha/cl9pqbjcn000c15ny0z25xkre/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXJ0aHVyanJvY2hhIiwiYSI6ImNsMXBjeGF0OTA0eXYzY3BndWpsbm15MTgifQ.U5WAS-rQQcswwiysi7mjaQ', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="https://imazon.org.br/">Imazon</a> | <a href="https://www.linkedin.com/in/arthur-rocha-56937a234/">Arthur Rocha</a>'
+	}).addTo(map);
+
+  // ---- control that shows state info on hover
+  const info = L.control();
+
+  info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info');
+    this.update();
+    return this._div;
+  };
+
+  info.update = function (props) {
+    
+    this._div.innerHTML = '<b>Localização dos frigoríficos ativos na Amazônia Legal</b>';
+  };
+
+  info.addTo(map);
+
+	
+// ---- Layer control 
+
+// Amazônia Legal
+var aLegal = L.geoJSON(amzLegalLinha, {
+      opacity: 1,
+      color: 'white',
+      dashArray: '2',
+      fillOpacity: 0,
+ }).addTo(map);
+
+// Áreas embargadas
+var aBioma = L.geoJSON(amzBiomaLinha, {
+      opacity: 1,
+      color: '#DFFF00',
+      dashArray: '6',
+      fillOpacity: 0,
+ })//.addTo(map)
+
+var overlays = {
+  'Amazônia Legal': aLegal,
+  'Bioma da Amazônia': aBioma,
+
+};
+
+
+// ---- COR PARA FRIGORÍFICOS COM TAC NÃO
+const geojsonMarkerOptions = {
+    radius: 4,
+    fillColor: "#FF0000",
+    color: "#000",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 1,
+  };
+
+  // ---- COR PARA FRIGORÍFICOS COM TAC SIM
+const geojsonMarkerOptions1 = {
+    radius: 4,
+    fillColor: "#00FF00",
+    color: "#000",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 1,
+  };
+
+// ---- TAC NÃO
+  var lightData1 = L.geoJSON(tacNao, {
+    onEachFeature: function (feature, layer) {
+
+           const popupContent =
+          '<h4 class = "text-primary">Planta Frigorífica </h4>' +
+          '<div class="container"><table class="table table-striped">' +
+          "<thead></thead>" +
+          "<tbody><tr><td> Empresa </td><td>" +
+          feature.properties.Frigorífi +
+          "</td></tr>" +
+
+          "</td></tr>" +
+          "<tr><td> Estado </td><td>" +
+          feature.properties.UF +
+          "</td></tr>" +
+          "<tr><td> Município </td><td>" +
+          feature.properties.Município +
+          "</td></tr>" +
+          "<tr><td> TAC </td><td>" +
+          feature.properties.TAC +
+          "</td></tr>";
+          
+          layer.bindPopup(popupContent);
+
+    },
+    pointToLayer: function (feature, latlng) {
+      return L.circleMarker(latlng, geojsonMarkerOptions);
+    },
+  }).addTo(map);
+
+
+  // ---- TAC SIM
+  var lightData = L.geoJSON(tacSim, {
+    onEachFeature: function (feature, layer) {
+
+           const popupContent =
+          '<h4 class = "text-primary">Planta Frigorífica </h4>' +
+          '<div class="container"><table class="table table-striped">' +
+          "<thead><tr></tr></thead>" +
+          "<tbody><tr><td>Empresa </td><td>" +
+          feature.properties.Frigorífi +
+          "</td></tr>" +
+          
+          "</td></tr>" +
+          "<tr><td> Estado </td><td>" +
+          feature.properties.UF +
+          "</td></tr>" +
+          "<tr><td> Município </td><td>" +
+          feature.properties.Município +
+          "</td></tr>" +
+          "<tr><td> TAC </td><td>" +
+          feature.properties.TAC +
+          "</td></tr>";
+          
+          layer.bindPopup(popupContent);
+
+    },
+    pointToLayer: function (feature, latlng) {
+      return L.circleMarker(latlng, geojsonMarkerOptions1);
+    },
+  }).addTo(map);
+
+var overlays2 = {
+  'Frigoríficos signatários do TAC': lightData,
+  'Frigoríficos não signatários do TAC': lightData1,
+
+
+};
+
+L.control.layers(overlays, overlays2).addTo(map);
+
+// Escala 
+L.control.scale().addTo(map)
+
+</script>
+
+
+
+</body>
+</html>
